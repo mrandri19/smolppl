@@ -63,7 +63,7 @@ class TestSmolppl(unittest.TestCase):
             norm.logpdf(4.0, 0.0, 5.0) + norm.logpdf(5.0, 4.0, 1.0),
         )
 
-    def test_prior_sampling_correct_1(self):
+    def test_prior_sampling_correct(self):
         x = LatentVariable("x", Normal, [0.0, 3.0])
         y = ObservedVariable("y", Normal, [x, 4.0], observed=1.5)
 
@@ -71,33 +71,6 @@ class TestSmolppl(unittest.TestCase):
 
         assert np.isclose(np.mean(prior_samples), 0.0, atol=1e-1)
         assert np.isclose(np.std(prior_samples), 5.0, atol=1e-1)
-
-    def test_prior_sampling_correct_2(self):
-        z = LatentVariable("z", Normal, [100.0, 0.1])
-        w = LatentVariable("w", Normal, [z, 0.1])
-        x = ObservedVariable("x", Normal, [z, w], observed=5.0)
-        # x ~ N(z, w)
-        # w ~ N(z, 0.1)
-        # z ~ N(100, 0.1)
-        #
-        # z = N(100, 0.1)
-        # w = N(100, 0.14)
-        # x = N(N(100, 0.1), N(100, 0.14)). Should be ok
-        # x = N(100, 0.1) + N(100, 0.14) * N(0, 1) ~= N(100, 100)
-        # x ~= [99.8,100.2] + [99.7,100.3] * [-2, 2]
-        # x ~= [-100, +300] => N(100, 100)
-
-        n_samples = 1_000
-        samples = [prior_sample(x) for _ in range(n_samples)]
-        sample_mean_mean = np.mean(samples)
-        sample_mean_std = np.std(samples) / np.sqrt(n_samples)
-
-        # in CLT we trust
-        assert (
-            (sample_mean_mean - 2 * sample_mean_std)
-            <= 100
-            <= (sample_mean_mean + 2 * sample_mean_std)
-        )
 
     def test_posterior_sampling_correct(self):
         x = LatentVariable("x", Normal, [0.0, 3.0])
